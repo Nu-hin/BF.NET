@@ -24,9 +24,8 @@ namespace BrainfuckCompiler
 {
     internal class AssemblyEmitter
     {
-        public static void Emit(string moduleName, string outFileName, string outputFileName, string program)
+        public static void Emit(string moduleName, string outFileName, string outputFileName, string program, bool optimize)
         {
-
             bool hasWriter = false;
             bool hasReader = false;
             AssemblyName assemblyName = new AssemblyName("Brainfuck");
@@ -52,16 +51,14 @@ namespace BrainfuckCompiler
             if (program.Contains(','))
             {
                 hasReader = true;
-                ilgen.DeclareLocal(typeof(TextReader)); //reader 2
+                ilgen.DeclareLocal(typeof(Stream)); //reader 2
             }
 
             if (program.Contains('.'))
             {
                 hasWriter = true;
-                ilgen.DeclareLocal(typeof(TextWriter)); //writer 3
+                ilgen.DeclareLocal(typeof(Stream)); //writer 3
             }
-            
-
 
             //allocate 30000 band
             ilgen.Emit(OpCodes.Ldc_I4, 30000);
@@ -75,18 +72,19 @@ namespace BrainfuckCompiler
             if (hasReader)
             {
                 //assign reader
-                ilgen.EmitCall(OpCodes.Call, typeof(Console).GetProperty("In").GetGetMethod(), Type.EmptyTypes);
+                ilgen.EmitCall(OpCodes.Call, typeof(Console).GetMethod("OpenStandardInput", Type.EmptyTypes), Type.EmptyTypes);
                 ilgen.Emit(OpCodes.Stloc_2);
             }
 
             if (hasWriter)
             {
                 //assign writer
-                ilgen.EmitCall(OpCodes.Call, typeof(Console).GetProperty("Out").GetGetMethod(), Type.EmptyTypes);
+                ilgen.EmitCall(OpCodes.Call, typeof(Console).GetMethod("OpenStandardOutput", Type.EmptyTypes), Type.EmptyTypes);
                 ilgen.Emit(hasReader ? OpCodes.Stloc_3 : OpCodes.Stloc_2);
             }
 
             Stack<Label> labelStack = new Stack<Label>();
+            Stack<int> bracesPostion = new Stack<int>();
             int j=0;
             int c=0;
 
@@ -95,42 +93,55 @@ namespace BrainfuckCompiler
                 switch (program[i])
                 {
                     case '>':
-                        j = i+1;
                         c = 1;
-                        while (j < program.Length && program[j] == '>')
+                        if (optimize)
                         {
-                            c++;
-                            j++;
+                            j = i + 1;
+                            
+                            while (j < program.Length && program[j] == '>')
+                            {
+                                c++;
+                                j++;
+                            }
+                            i = j - 1;
                         }
-                        i = j - 1;
                         ilgen.Emit(OpCodes.Ldloc_1);
                         ilgen.Emit(OpCodes.Ldc_I4,c);
                         ilgen.Emit(OpCodes.Add);
                         ilgen.Emit(OpCodes.Stloc_1);
                         break;
                     case '<':
-                        j = i+1;
                         c = 1;
-                        while (j < program.Length && program[j] == '<')
+                        if (optimize)
                         {
-                            c++;
-                            j++;
+                            j = i + 1;
+
+                            while (j < program.Length && program[j] == '<')
+                            {
+                                c++;
+                                j++;
+                            }
+                            i = j - 1;
                         }
-                        i = j - 1;
+                        
                         ilgen.Emit(OpCodes.Ldloc_1);
                         ilgen.Emit(OpCodes.Ldc_I4,c);
                         ilgen.Emit(OpCodes.Sub);
                         ilgen.Emit(OpCodes.Stloc_1);
                         break;
                     case '+':
-                        j = i+1;
                         c = 1;
-                        while (j < program.Length && program[j] == '+')
+                        if (optimize)
                         {
-                            c++;
-                            j++;
+                            j = i + 1;
+
+                            while (j < program.Length && program[j] == '+')
+                            {
+                                c++;
+                                j++;
+                            }
+                            i = j - 1;
                         }
-                        i = j - 1;
                         ilgen.Emit(OpCodes.Ldloc_0);
                         ilgen.Emit(OpCodes.Ldloc_1);
                         ilgen.Emit(OpCodes.Ldelema, typeof(byte));
@@ -142,15 +153,18 @@ namespace BrainfuckCompiler
                         ilgen.Emit(OpCodes.Stobj, typeof(byte));
                         break;
                     case '-':
-                        j = i+1;
                         c = 1;
-                        while (j < program.Length && program[j] == '-')
+                        if (optimize)
                         {
-                            c++;
-                            j++;
-                        }
-                        i = j - 1;
+                            j = i + 1;
 
+                            while (j < program.Length && program[j] == '-')
+                            {
+                                c++;
+                                j++;
+                            }
+                            i = j - 1;
+                        }
                         ilgen.Emit(OpCodes.Ldloc_0);
                         ilgen.Emit(OpCodes.Ldloc_1);
                         ilgen.Emit(OpCodes.Ldelema, typeof(byte));
@@ -166,19 +180,19 @@ namespace BrainfuckCompiler
                         ilgen.Emit(OpCodes.Ldloc_0);
                         ilgen.Emit(OpCodes.Ldloc_1);
                         ilgen.Emit(OpCodes.Ldelem_U1);
-                        ilgen.Emit(OpCodes.Conv_U1);
-                        ilgen.EmitCall(OpCodes.Callvirt, typeof(TextWriter).GetMethod("Write", new Type[] { typeof(char) }), Type.EmptyTypes);
+                        ilgen.EmitCall(OpCodes.Callvirt, typeof(Stream).GetMethod("WriteByte", new Type[] { typeof(byte) }), Type.EmptyTypes);
                         break;
                     case ',':
                         ilgen.Emit(OpCodes.Ldloc_0);
                         ilgen.Emit(OpCodes.Ldloc_1);
                         ilgen.Emit(OpCodes.Ldelema, typeof(byte));
                         ilgen.Emit(OpCodes.Ldloc_2);
-                        ilgen.EmitCall(OpCodes.Callvirt, typeof(TextReader).GetMethod("Read", Type.EmptyTypes), Type.EmptyTypes);
+                        ilgen.EmitCall(OpCodes.Callvirt, typeof(Stream).GetMethod("ReadByte", Type.EmptyTypes), Type.EmptyTypes);
                         ilgen.Emit(OpCodes.Conv_U1);
                         ilgen.Emit(OpCodes.Stobj, typeof(byte));
                         break;
                     case '[':
+                        bracesPostion.Push(i);
                         var farlabel = ilgen.DefineLabel();
                         var closelabel = ilgen.DefineLabel();
                         ilgen.Emit(OpCodes.Br, farlabel);
@@ -187,6 +201,12 @@ namespace BrainfuckCompiler
                         labelStack.Push(closelabel);
                         break;
                     case ']':
+                        bracesPostion.Pop();
+                        if (!labelStack.Any())
+                        {
+                            Console.WriteLine("Syntax error: Unbalanced ']' at position {0}.",  i);
+                            return;
+                        }
                         var _closelabel = labelStack.Pop();
                         var _farlabel = labelStack.Pop();
                         ilgen.MarkLabel(_farlabel);
@@ -195,10 +215,19 @@ namespace BrainfuckCompiler
                         ilgen.Emit(OpCodes.Ldelem_U1);
                         ilgen.Emit(OpCodes.Brtrue, _closelabel);
                         break;
+                    default:
+                        Console.WriteLine("Syntax error: Unexpected symbol '{0}' at position {1}.", program[i], i);
+                        return;
                 }
             }
 
-            
+            if (bracesPostion.Any())
+            {
+                Console.WriteLine("Syntax error: Unbalanced '[' at position {0}.", bracesPostion.Peek());
+                return;
+            }
+
+
             ilgen.Emit(OpCodes.Ret);
             //end main
 

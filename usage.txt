@@ -1,1 +1,6 @@
-﻿Usage: bfc.exe <path to source file>
+﻿Usage: bfc.exe [OPTIONS] [<path to source file>]
+
+/h, /?, /help         Print this help message and exit.
+/p, /code:<code>      Raw Brainfuck code to compile
+/d                    Disable code optimization.
+/o, /output:<path>    A path to output file

@@ -20,6 +20,7 @@ using System.Text;
 using System.Resources;
 using System.IO;
 using System.Reflection;
+using Mono.Options;
 
 namespace BrainfuckCompiler
 {
@@ -28,6 +29,8 @@ namespace BrainfuckCompiler
         private static string _sourceFile;
         private static string _outFile;
         private static string _moduleName;
+        private static string _program;
+        private static bool _optimizing;
 
         private static void Main(string[] args)
         {
@@ -36,37 +39,59 @@ namespace BrainfuckCompiler
             {
                 return;
             }
-            
-            String program = File.ReadAllText(_sourceFile)
+
+            if (!String.IsNullOrEmpty(_sourceFile) && !File.Exists(_sourceFile))
+            {
+                Console.WriteLine("Error: source file {0} is not found." , _sourceFile);
+            }
+
+
+            String program = String.IsNullOrEmpty(_program) ? File.ReadAllText(_sourceFile) : _program;
+
+            program = program
                 .Replace(Environment.NewLine,"")
                 .Replace(" ", "")
                 .Replace("\t","");
-            AssemblyEmitter.Emit(_moduleName,Path.GetFileName(_outFile), _outFile,program);
+            AssemblyEmitter.Emit(_moduleName,Path.GetFileName(_outFile), _outFile,program, _optimizing);
         }
 
         private static bool AnalyzeArguments(string[] args)
         {
-            if (!args.Any())
+            bool ss = true;
+            _optimizing = true;
+            OptionSet p = new OptionSet();
+            p.Add("h|help|?", "Show this help message and exit.", v => { PrintUsage(); ss = false; });
+            p.Add("o|output=", "A {path} to the output file.", v => { _outFile = v; });
+            p.Add("p|code=","Raw Brainfuck {code} to compile." , v => { _program = v; });
+            p.Add("d", "Disable code optiomization", t => { _optimizing = false; });
+            var res = p.Parse(args);
+
+            if (!ss)
+            {
+                return false;
+            }
+
+            _sourceFile = res.FirstOrDefault();
+            if (String.IsNullOrEmpty(_sourceFile) && string.IsNullOrEmpty(_program))
             {
                 PrintUsage();
                 return false;
             }
 
-            _sourceFile = args.Last();
-            _outFile = _sourceFile + ".exe";
-            _moduleName = Path.GetFileNameWithoutExtension(_sourceFile);
-            //for (int i = 0; i < args.Length; i++)
-            //{
-            //    switch (args[i])
-            //    {
-            //        case "/?":
-            //        case "/help":
-            //            PrintUsage();
-            //            return false;
-            //        default:
-            //            break;
-            //    }
-            //}
+            if (String.IsNullOrEmpty(_outFile))
+            {
+                if (!String.IsNullOrEmpty(_sourceFile))
+                {
+                    _outFile = Path.GetFileNameWithoutExtension(_sourceFile) + ".exe";
+                }
+                else
+                {
+                    _outFile = "out.exe";
+                }
+            }
+
+            _moduleName = Path.GetFileNameWithoutExtension(Path.GetFileName(_outFile));
+
             return true;
         }
 
