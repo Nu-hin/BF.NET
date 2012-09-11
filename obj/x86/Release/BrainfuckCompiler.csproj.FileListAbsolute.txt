@@ -1,0 +1,5 @@
+D:\Projects\BrainfuckCompiler\bin\Release\bfc.exe
+D:\Projects\BrainfuckCompiler\bin\Release\bfc.pdb
+D:\Projects\BrainfuckCompiler\obj\x86\Release\ResolveAssemblyReference.cache
+D:\Projects\BrainfuckCompiler\obj\x86\Release\bfc.exe
+D:\Projects\BrainfuckCompiler\obj\x86\Release\bfc.pdb
