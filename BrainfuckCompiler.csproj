@@ -60,6 +60,7 @@
   <ItemGroup>
     <None Include="Examples\helloworld.bf" />
     <None Include="Examples\jabh.bf" />
+    <None Include="Examples\selfinterpreter.bf" />
     <None Include="Examples\squares.bf" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
