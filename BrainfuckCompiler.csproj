@@ -49,7 +49,9 @@
     <Compile Include="StringCoda.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="usage.txt" />
+    <EmbeddedResource Include="usage.txt">
+      <DependentUpon>README.md</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="about.txt" />
@@ -63,6 +65,7 @@
     <None Include="Examples\jabh.bf" />
     <None Include="Examples\selfinterpreter.bf" />
     <None Include="Examples\squares.bf" />
+    <None Include="README.md" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

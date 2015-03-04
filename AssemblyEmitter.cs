@@ -44,6 +44,7 @@ namespace BrainfuckCompiler
 
             var mainMethod = tb.DefineMethod("Main", MethodAttributes.Static | MethodAttributes.HideBySig);
             var ilgen = mainMethod.GetILGenerator();
+
             //Main
             ilgen.DeclareLocal(typeof(byte[])); // band 0
             ilgen.DeclareLocal(typeof(int)); // p 1
@@ -226,7 +227,6 @@ namespace BrainfuckCompiler
                 Console.WriteLine("Syntax error: Unbalanced '[' at position {0}.", bracesPostion.Peek());
                 return;
             }
-
 
             ilgen.Emit(OpCodes.Ret);
             //end main

@@ -45,7 +45,6 @@ namespace BrainfuckCompiler
                 Console.WriteLine("Error: source file {0} is not found." , _sourceFile);
             }
 
-
             String program = String.IsNullOrEmpty(_program) ? File.ReadAllText(_sourceFile) : _program;
 
             program = program
@@ -114,14 +113,6 @@ namespace BrainfuckCompiler
         private static void PrintUsage()
         {
             Console.WriteLine(GetResourceText("usage.txt"));
-        }
-
-        private static void CIL()
-        {
-            Console.WriteLine("Hello, Brainfuck");
-            var x = Console.In;
-            int z;
-            z=x.Read();
         }
     }
 }
